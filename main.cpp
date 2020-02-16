@@ -13,7 +13,7 @@ int main(int, char**) {
     }
 
     HTTPDownloader downloader;
-    std::string content = downloader.download("http://www.mangapanda.com/shingeki-no-kyojin");
+    std::string content = downloader.download("https://www.google.com/");
     // std::cout << content << std::endl;
     std::string content_clean = downloader.CleanHTML(content);
     std::cout << content_clean << std::endl;
