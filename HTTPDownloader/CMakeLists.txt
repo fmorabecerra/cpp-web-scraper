@@ -17,20 +17,8 @@ find_package(CURL REQUIRED)
 include_directories(${CURL_INCLUDE_DIR})
 target_link_libraries(HTTPDownloader PUBLIC ${CURL_LIBRARIES})
 
-
-# # Build working but runtime errors.
-# set(TIDY_LIBRARY "-ltidy")
-# set(TIDY_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tidy-html5/include")
-# include_directories(${TIDY_INCLUDE_DIR})
-# set(TIDY_LIBRARIES "/usr/lib/libtidy.so.5")
-# target_link_libraries(HTTPDownloader PUBLIC ${TIDY_LIBRARIES})
-
-
 # Need to add module path. Otherwise cmake will not be able to find Tidy
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-# Tidy can't find the following two.
-# set(TIDY_LIBRARY "-ltidy")
 find_package(Tidy REQUIRED)
-# set(TIDY_INCLUDE_DIR "usr/include")
 include_directories(${TIDY_INCLUDE_DIR})
 target_link_libraries(HTTPDownloader PUBLIC ${TIDY_LIBRARIES})
