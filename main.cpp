@@ -2,52 +2,71 @@
 #include <fstream>
 #include <string>
 
-#include "main.h"
-#include "HTTPDownloader.h"
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+
+#include <libxml2/libxml/tree.h>
+#include <libxml2/libxml/HTMLparser.h>
 #include <libxml++/libxml++.h>
+
+#define HEADER_ACCEPT "Accept:text/html,application/xhtml+xml,application/xml"
+#define HEADER_USER_AGENT "User-Agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.70 Safari/537.17"
 
 // Prototype Declarations
 void print_indentation(unsigned int indentation);
 void print_node(const xmlpp::Node* node, unsigned int indentation = 0);
 
 int main(int, char**) {
-    std::cout << "Hello, world!\n";
-    std::cout << "My name is pacho" << std::endl;
+  std::string url = "http://www.mangapanda.com/shingeki-no-kyojin";
+  curlpp::Easy request;
 
-    for(int i=0; i<MAX_ITERATIONS; i++)
-    {
-        std::cout << "Iteration #" << i << std::endl;
-    }
+  // Specify the URL
+  request.setOpt(curlpp::options::Url(url));
+ 
+  // Specify some headers
+  std::list<std::string> headers;
+  headers.push_back(HEADER_ACCEPT);
+  headers.push_back(HEADER_USER_AGENT);
+  request.setOpt(new curlpp::options::HttpHeader(headers));
+  request.setOpt(new curlpp::options::FollowLocation(true));
+ 
+  // Configure curlpp to use stream
+  std::ostringstream responseStream;
+  curlpp::options::WriteStream streamWriter(&responseStream);
+  request.setOpt(streamWriter);
+ 
+  // Collect response
+  request.perform();
+  std::string re = responseStream.str();
+  // Save downloaded HTML to file
+  std::ofstream out("output.html");
+  out << re;
+  out.close();
 
-    HTTPDownloader downloader;
-    std::string html_content = downloader.download("http://www.mangapanda.com/shingeki-no-kyojin");
-    // Save downloaded HTML to file
-    std::ofstream out("output.html");
-    out << html_content;
-    out.close();
+  // Parse HTML and create a DOM tree
+  xmlDoc* doc = htmlReadDoc((xmlChar*)re.c_str(), NULL, NULL, HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
+ 
+  // Encapsulate raw libxml document in a libxml++ wrapper
+  xmlNode* r = xmlDocGetRootElement(doc);
+  xmlpp::Element* root = new xmlpp::Element(r);
+ 
+  // Grab the IP address
+  std::string xpath = "//div[@id='latestchapters']/ul/li[1]/a/text()";
+  auto elements = root->find(xpath);
+  std::cout << "Size of elements: " << elements.size() << std::endl;
+  
+  std::string chapter_info = dynamic_cast<xmlpp::ContentNode*>(elements[0])->get_content();
+  std::cout << "The latest Chapter is: " << chapter_info << std::endl;
+  std::cout << "Chapter number: " << chapter_info.substr(19,chapter_info.size()) << std::endl;
 
-    // Convert HTML to XML
-    std::string html_clean_xml = downloader.CleanHTML(html_content);
-
-    // Save XML content to file
-    std::ofstream out2("output.xml");
-    out2 << html_clean_xml;
-    out2.close();
-
-    // // Let's parse xml
-    xmlpp::DomParser doc;
-    doc.parse_memory(html_clean_xml);
-    xmlpp::Document* document = doc.get_document();
-    xmlpp::Element* root = document->get_root_node();
-
-    xmlpp::NodeSet elemns = root->find("descendant-or-self::*[@href]");
-    // xmlpp::NodeSet elemns = root->find("//div[@id='latestchapters']/ul/li[1]/a");
-    std::cout << elemns[0]->get_line() << std::endl;
-    std::cout << elemns[0]->get_name() << std::endl;
-    std::cout << elemns.size() << std::endl;
-    
-    // Print node and all children, grandchildren, etc. recursively
-    print_node(elemns[1]);
+  // Print node and all children, grandchildren, etc. recursively
+  print_node(elements[0]);
+ 
+  delete root;
+  xmlFreeDoc(doc);
+ 
+  return 0;
 }
 
 void print_indentation(unsigned int indentation)
