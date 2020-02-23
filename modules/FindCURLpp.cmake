@@ -14,7 +14,8 @@
 # CURLPP_LIBRARIES	- List of libraries when using curlpp.
 # CURLPP_FOUND	- True if curlpp found.
 
-find_package(CURL REQUIRED)
+# Do not need to look for curl again. Already found in top level CMakeLists.txt
+# find_package(CURL REQUIRED)
 
 # Look for the header file.
 FIND_PATH(CURLPP_INCLUDE_DIR NAMES curlpp/cURLpp.hpp)
