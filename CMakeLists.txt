@@ -40,3 +40,7 @@ include_directories("/usr/lib/x86_64-linux-gnu/glibmm-2.4/include")
 target_link_libraries(web-scraper PUBLIC ${glibmm_LIBRARIES})
 include_directories(${glib_INCLUDE_DIR})
 include_directories("/usr/lib/x86_64-linux-gnu/glib-2.0/include/")
+
+find_package(PahoMqttC REQUIRED)
+target_link_libraries(web-scraper PUBLIC ${PAHO_MQTT_C_LIBRARIES})
+target_link_libraries(web-scraper PUBLIC "/usr/local/lib/libpaho-mqttpp3.so")
