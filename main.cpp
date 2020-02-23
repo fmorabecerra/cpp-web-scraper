@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -16,6 +17,27 @@
 // Prototype Declarations
 void print_indentation(unsigned int indentation);
 void print_node(const xmlpp::Node* node, unsigned int indentation = 0);
+
+/*******************************************************************************
+ * MQTT stuff
+ *******************************************************************************/
+#include "mqtt/async_client.h"
+
+using namespace std;
+
+const string DFLT_SERVER_ADDRESS { "tcp://192.168.0.138:1883" };
+
+const string TOPIC { "ESP8266/sample/sub" };
+const int QOS = 1;
+
+const char* PAYLOADS[] = {
+	"fad",
+	"on_",
+  "off",
+	nullptr
+};
+
+const auto TIMEOUT = std::chrono::seconds(10);
 
 int main(int, char**) {
   std::string url = "http://www.mangapanda.com/shingeki-no-kyojin";
@@ -65,9 +87,52 @@ int main(int, char**) {
  
   delete root;
   xmlFreeDoc(doc);
+
+  ////////////////
+  // MQTT Stuff
+  ////////////////
+  string address = DFLT_SERVER_ADDRESS;
+
+	cout << "Initializing for server '" << address << "'..." << endl;
+	mqtt::async_client cli(address, "");
+
+	cout << "  ...OK" << endl;
+
+	try {
+		cout << "\nConnecting..." << endl;
+		cli.connect()->wait();
+		cout << "  ...OK" << endl;
+
+		cout << "\nPublishing messages..." << endl;
+
+		mqtt::topic top(cli, TOPIC, QOS);
+		mqtt::token_ptr tok;
+
+		size_t i = 0;
+		while (PAYLOADS[i]) {
+      cout << "Publish mesg: " << PAYLOADS[i] << "\n" << endl;
+			tok = top.publish(PAYLOADS[i++]);
+      usleep(3*1000000); //microseconds);
+		}
+		tok->wait();	// Just wait for the last one to complete.
+		cout << "OK" << endl;
+
+		// Disconnect
+		cout << "\nDisconnecting..." << endl;
+		cli.disconnect()->wait();
+		cout << "  ...OK" << endl;
+	}
+	catch (const mqtt::exception& exc) {
+		cerr << exc.what() << endl;
+		return 1;
+	}
  
   return 0;
 }
+
+/*******************************************************************************
+ * Other Functions
+ *******************************************************************************/
 
 void print_indentation(unsigned int indentation)
 {
