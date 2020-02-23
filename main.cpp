@@ -40,7 +40,7 @@ const char* PAYLOADS[] = {
 const auto TIMEOUT = std::chrono::seconds(10);
 
 int main(int, char**) {
-  std::string url = "http://www.mangapanda.com/shingeki-no-kyojin";
+  std::string url = "https://attackontitan.fandom.com/wiki/Attack_on_Titan_Wiki#Chapters";
   curlpp::Easy request;
 
   // Specify the URL
@@ -74,13 +74,14 @@ int main(int, char**) {
   xmlpp::Element* root = new xmlpp::Element(r);
  
   // Grab the IP address
-  std::string xpath = "//div[@id='latestchapters']/ul/li[1]/a/text()";
+  std::string xpath = "//div[@title='Chapters']//table//p/text()[1]";
   auto elements = root->find(xpath);
   std::cout << "Size of elements: " << elements.size() << std::endl;
   
   std::string chapter_info = dynamic_cast<xmlpp::ContentNode*>(elements[0])->get_content();
+  std::string chapter_number = chapter_info.substr(9,3);
   std::cout << "The latest Chapter is: " << chapter_info << std::endl;
-  std::cout << "Chapter number: " << chapter_info.substr(19,chapter_info.size()) << std::endl;
+  std::cout << "Chapter number: " << chapter_number << std::endl;
 
   // Print node and all children, grandchildren, etc. recursively
   print_node(elements[0]);
