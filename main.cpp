@@ -89,6 +89,9 @@ int main(int, char**) {
   delete root;
   xmlFreeDoc(doc);
 
+  // Uncomment this to run the MQTT stuff
+  return 0;
+
   ////////////////
   // MQTT Stuff
   ////////////////
